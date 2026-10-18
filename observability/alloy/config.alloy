@@ -1,0 +1,72 @@
+// Grafana Alloy — pipeline de coleta de logs
+//
+//  Docker (stdout dos contêineres)
+//      -> descoberta (só contêineres com observabilidade.logs=true)
+//      -> rótulos: service, container
+//      -> parse do JSON: level vira rótulo, trace_id vira metadado estruturado
+//      -> envio ao Loki
+//
+// Regra de ouro: só vira RÓTULO o que tem poucos valores possíveis
+// (service, container, level). user_id e trace_id ficam no CONTEÚDO.
+
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+
+  filter {
+    name   = "label"
+    values = ["observabilidade.logs=true"]
+  }
+}
+
+discovery.relabel "containers" {
+  targets = []
+
+  // Nome do serviço no compose -> rótulo "service"
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
+  }
+
+  // Nome do contêiner (ex.: observabilidade-logs-pagamentos-2) -> rótulo "container"
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+}
+
+loki.source.docker "containers" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.docker.containers.targets
+  relabel_rules = discovery.relabel.containers.rules
+  forward_to    = [loki.process.json.receiver]
+}
+
+loki.process "json" {
+  // Lê campos do JSON de cada linha
+  stage.json {
+    expressions = {
+      level    = "level",
+      trace_id = "trace_id",
+    }
+  }
+
+  // level tem 4 valores possíveis: pode ser rótulo
+  stage.labels {
+    values = { level = "" }
+  }
+
+  // trace_id tem um valor por requisição: NÃO pode ser rótulo.
+  // Vai como metadado estruturado (Loki 3+), filtrável sem criar séries.
+  stage.structured_metadata {
+    values = { trace_id = "" }
+  }
+
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
