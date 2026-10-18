@@ -172,8 +172,4 @@ cada serviço "custa" em volume.
 | Grafana Loki | 3.5.0 | armazenamento e consulta (LogQL) |
 | Grafana | 12.0.0 | visualização |
 
-Todas gratuitas e de código aberto; o conjunto roda em notebook comum (~1,5 GB de RAM).
-
-## Uso de IA generativa
-
-Declarado no relatório, conforme as regras do seminário.
+Todas gratuitas e de código aberto;
