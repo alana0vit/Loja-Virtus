@@ -9,12 +9,18 @@ datasources:
     isDefault: true
     jsonData:
       maxLines: 1000
-      # Transforma o trace_id de qualquer linha num link clicável que
-      # busca a mesma requisição em TODOS os serviços ("$$" escapa o $ do provisionamento)
+      # Transforma o trace_id de qualquer linha num link clicável que abre o painel
+      # da loja filtrado por esse trace_id: a mesma requisição em TODOS os serviços.
+      #
+      # Por que um link para o painel e não para o Explore: um link "interno" do Loki
+      # para o próprio Loki abre o painel dividido com a consulta VAZIA ("No data"),
+      # porque o Grafana monta a consulta no campo errado. O link para o painel, com a
+      # variável "busca" preenchida, funciona sempre.
+      # ("$$" escapa o $ no arquivo de provisionamento)
       derivedFields:
         - name: trace_id
           matcherType: regex
           matcherRegex: '"trace_id":\s*"([0-9a-f]{32})"'
-          datasourceUid: loki
-          url: '{service=~".+"} | trace_id="$${__value.raw}" | json'
+          url: '/d/logs-loja/?var-busca=$${__value.raw}&from=now-1h&to=now'
           urlDisplayLabel: "Ver esta requisição em todos os serviços"
+          targetBlank: true

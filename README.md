@@ -23,7 +23,7 @@ docker compose up -d --build
 | O quê | Onde |
 |---|---|
 | Grafana (sem login) — painel "Loja — Logs centralizados" | http://localhost:3000 |
-| Loki (API) | http://localhost:3100 |
+| Loki (só API, sem tela: a raiz dá 404) | http://localhost:3100/ready → `ready` |
 | Alloy (grafo do pipeline de coleta) | http://localhost:12345 |
 | API da loja (gateway) | http://localhost:8080/docs |
 
@@ -118,7 +118,8 @@ Primeira vez no Explore? Veja o passo a passo em [`docs/EXPLORE.md`](docs/EXPLOR
    ```logql
    {service=~".+"} | trace_id="<código>" | json
    ```
-   (ou clique no link **"Ver esta requisição em todos os serviços"** no detalhe de qualquer linha)
+   (ou clique no link **"Ver esta requisição em todos os serviços"** no detalhe de qualquer linha:
+   ele abre, numa aba nova, o painel filtrado por esse `trace_id`)
 4. **Causa** — a linha de `pagamentos` traz `error_type=ValueError`, `version=1.4.1` e o stack trace.
 5. **Confirmação: é só uma réplica?**
    ```logql
@@ -172,4 +173,8 @@ cada serviço "custa" em volume.
 | Grafana Loki | 3.5.0 | armazenamento e consulta (LogQL) |
 | Grafana | 12.0.0 | visualização |
 
-Todas gratuitas e de código aberto;
+Todas gratuitas e de código aberto; o conjunto roda em notebook comum (~1,5 GB de RAM).
+
+## Uso de IA generativa
+
+Declarado no relatório, conforme as regras do seminário.
